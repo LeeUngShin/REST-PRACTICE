@@ -14,17 +14,16 @@
 			// 위의 반환을 받으면 { "result" : "success"
 			//					"grade" : "member" } 형태로 온다.
 			// 글머에도 세션값을 받아오는 이유는 새로고침 시에 사용하려고???
-			var loginok = '<%=(String)session.getAttribute("loginok")%>';
+			var loginok1 = '<%=(String)session.getAttribute("loginok")%>';
 			var member_grade = '<%=(String)session.getAttribute("membergrade")%>';
 
 			function loginCheck(){
-				console.log(loginok);
-				console.log(member_grade);
+				console.log("페이지 로드 시 : " + loginok1);
+				console.log("페이지 로드 시 "+ member_grade);
 				//var loginok = '<%=(String)session.getAttribute("loginok")%>'; 
-				if(loginok != "" && loginok != "null"){  // 로그인 상태이면
+				if(loginok1 != "" && loginok1 != "null"){  // 로그인 상태이면
 					document.getElementById("loginbox").style.display = "none";
 					document.getElementById("contentsdiv").style.display = "block";
-					
 					getList();
 				}
 				else{  // 비로그인 상태이면
@@ -52,8 +51,10 @@
 					if(data.result == "fail"){  // data.키 = 값
 						alert("로그인 실패");
 					}else{
-						loginok = userid;
+						loginok1 = userId;
 						member_grade = data.grade;
+						console.log("로그인 후 : " + loginok1);
+						console.log("로그인 후 : " + member_grade);
 						document.getElementById("loginbox").style.display="none";
 						document.getElementById("contentsdiv").style.display="block";
 						getList();
@@ -64,7 +65,7 @@
 			function goLogout() {  // 로그아웃 버튼 누르면 이 함수 호출
 				fetch("http://127.0.0.1:8080/logoutREST")  // 로그아웃 버튼 누르면 이 url로 매핑
 				.then((response) => {
-					loginok = "";
+					loginok1 = "";
 					member_grade = "";
 					document.getElementById("loginbox").style.display = "block";
 					document.getElementById("contentsdiv").style.display = "none";		
@@ -118,15 +119,17 @@
 					.then((data) => {  // json으로 변환된 댓글List
 					  document.getElementById("contentsTable").innerHTML = 
 						"<tr>" +
-						"	<td width=50>ID</td> " +
+						"	<td width=50>삭제</td> " +
+						"	<td width=200>ID</td> " +
 						"	<td width=100>작성자</td> " +
 						"	<td width=200>내용</td>" +
+						"	<td width=50>수정</td>" +
 						"</tr>";
 					//var loginok = '<%=(String)session.getAttribute("loginok")%>'; 
 					for(index = 0; index < data.length; index++) {  // 댓글 개수만큼 반복
 						var delText = "";
-						var loginok = '<%=(String)session.getAttribute("loginok")%>';
-						if(data[index].writer == loginok || member_grade == "admin") {  // 게시글의 작성자와 현재 로그인한 회원의 아이디가 같으면
+						//var loginok1 = '<%=(String)session.getAttribute("loginok")%>';
+						if(data[index].writer == loginok1 || member_grade == "admin") {  // 게시글의 작성자와 현재 로그인한 회원의 아이디가 같으면
 
 							// 현재 게시글의 게시글번호를 매개변수로 하는 goDel호출하는 <a>태그를 delText에 저장(삭제버튼)
 							// => 내가 작성한 댓글에 대해서만 삭제버튼 나오도록
@@ -134,10 +137,30 @@
 							delText = "<a href='javascript:goDel(" + data[index].id + ")'>[X]</a>";
 						}
 						
+						var modifyFormText = "";						
+						if(data[index].writer == loginok1 || member_grade == "admin") {  // 게시글의 작성자와 현재 로그인한 회원의 아이디가 같으면
+							modifyFormText = "<a href='javascript:goModifyForm(" + data[index].id + ")' id = 'modifyFormText_" + data[index].id+"'>[수정]</a>";
+						}
+						
+						var modifyProcessText = "";						
+						if(data[index].writer == loginok1 || member_grade == "admin") {  // 게시글의 작성자와 현재 로그인한 회원의 아이디가 같으면
+							modifyProcessText = "<a href='#' id ='modifyProcessText_" + data[index].id+"' style='display : none'>[수정완료]</a>";
+						}
+						
+						//var modifyForm = "<input type='text' value='" + data[index].contents + "' id='modifyForm_'"+ data[index].id+ "name='modifyForm' style='display:none;'>";
+						//var modifyForm = "<input type='text' value='" + data[index].contents + "' name='modifyForm' style='display : none' id ='modifyFormText_" + data[index].id+"'>;
+						var modifyForm = "<input type='text' value='" + data[index].contents + "' name='modifyForm' style='display: none;' id='modifyFormInput_" + data[index].id + "'>";
+
+
 						document.getElementById("contentsTable").innerHTML += 
-									"		<tr><td>" + delText + " " + data[index].id + "</td>" +
+									"		<tr>" +
+									"			<td>" + delText + "</td>" + 
+									"			<td>"  + data[index].id + "</td>" +
 									"			<td>" + data[index].name + "</td>" +
-									"			<td>" + data[index].contents + "</td>" +
+									"			<td id='contentTd_" + data[index].id+"'>" + data[index].contents + "</td>" +
+									"			<td id='modifyFormTd_" + data[index].id + "'style='display:none'>" + modifyForm  + "</td>" +
+									"			<td id='modifyFormButtonTd_" + data[index].id+"'>" + modifyFormText + "</td>" +
+									"			<td id='modifyProcessButtonTd_" + data[index].id+"'style='display:none'>" + modifyProcessText  + "</td>" +
 									"		</tr>";
 						
 					}
@@ -161,6 +184,30 @@
 					});
 				}
 			}
+			
+			function goModifyForm(id){
+				
+				var modifyForm = document.getElementById("contentTd_" + id);
+				modifyForm.style.display = 'none';
+				
+				var modifyForm = document.getElementById("modifyFormTd_" + id);
+				modifyForm.style.display = 'table-cell';
+
+				var modifyForm = document.getElementById("modifyFormInput_" + id);
+				modifyForm.style.display = 'table-cell';
+				
+				var modifyForm = document.getElementById("modifyFormButtonTd_" + id);
+				modifyForm.style.display = 'none';
+				
+				var modifyForm = document.getElementById("modifyFormText_" + id);
+				modifyForm.style.display = 'none';
+
+				var modifyForm = document.getElementById("modifyProcessButtonTd_" + id);
+				modifyForm.style.display = 'table-cell';
+
+				var modifyForm = document.getElementById("modifyProcessText_" + id);
+				modifyForm.style.display = 'table-cell';
+			}
 
 			
 			function keyPress(event, menunum){
@@ -176,8 +223,8 @@
 							
 		</script>
 		
-		<%String name = (String)session.getAttribute("loginok") %>
-		${name}님 로그인 중<br>
+		<%String name = (String)session.getAttribute("loginok"); %>
+		<%=name%>님 로그인 중<br>
 		${loginok}님 로그인 중<br>
 		
 		
