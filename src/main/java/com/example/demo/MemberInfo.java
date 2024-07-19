@@ -16,7 +16,7 @@ import lombok.ToString;
 @Getter
 @RequiredArgsConstructor
 @AllArgsConstructor
-@Table(name = "tbl_memberInfo")
+@Table(name = "tbl_memberInfoComment")
 @Entity
 @Builder
 public class MemberInfo {

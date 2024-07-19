@@ -33,6 +33,7 @@
 				}
 			}
 			
+			
 			function goLogin(){  // 로그인 버튼 누르면 이 함수 호출
 				var userId = document.getElementById("userid").value;  // 입력한 id
 				var password = document.getElementById("userpassword").value;  // 입력한 pw
@@ -53,14 +54,15 @@
 					}else{
 						loginok1 = userId;
 						member_grade = data.grade;
-						console.log("로그인 후 : " + loginok1);
-						console.log("로그인 후 : " + member_grade);
+						//console.log("로그인 후 : " + loginok1);
+						//console.log("로그인 후 : " + member_grade);
 						document.getElementById("loginbox").style.display="none";
 						document.getElementById("contentsdiv").style.display="block";
 						getList();
 					}
 				});
 			}
+			
 
 			function goLogout() {  // 로그아웃 버튼 누르면 이 함수 호출
 				fetch("http://127.0.0.1:8080/logoutREST")  // 로그아웃 버튼 누르면 이 url로 매핑
@@ -144,7 +146,20 @@
 						
 						var modifyProcessText = "";						
 						if(data[index].writer == loginok1 || member_grade == "admin") {  // 게시글의 작성자와 현재 로그인한 회원의 아이디가 같으면
-							modifyProcessText = "<a href='#' id ='modifyProcessText_" + data[index].id+"' style='display : none'>[수정완료]</a>";
+						//	modifyProcessText = "<a href='javascript:goMod(" + data[index].id + ", \"" + data[index].writer + "\", \"" + data[index].name + "\")' id='modifyProcessText'>"+[수정완료]+"</a>";
+						// JavaScript로 HTML 문자열을 생성하는 예
+						/*var modifyProcessText = "<a href='javascript:goMod(" 
+						    + data[index].id + ", \"" 
+						    + data[index].writer + "\", \"" 
+						    + data[index].name + "\")' id='modifyProcessText_" + data[index].id +"' style='display:none'>" + [수정완료] +"</a>";*/
+							
+						var modifyProcessText = "<a href='javascript:goMod(" 
+						    + data[index].id + ", \"" 
+						    + data[index].writer + "\", \"" 
+						    + data[index].name + "\")' id='modifyProcessText_" 
+						    + data[index].id + "' style='display:none;'>수정완료</a>";
+
+
 						}
 						
 						//var modifyForm = "<input type='text' value='" + data[index].contents + "' id='modifyForm_'"+ data[index].id+ "name='modifyForm' style='display:none;'>";
@@ -206,9 +221,26 @@
 				modifyForm.style.display = 'table-cell';
 
 				var modifyForm = document.getElementById("modifyProcessText_" + id);
-				modifyForm.style.display = 'table-cell';
+				
+				modifyForm.style.display = 'block';
 			}
-
+			
+			function goMod(id, writer, modName ){
+				var modifyText = document.getElementById('modifyFormInput_' + id).value;
+				alert(modifyText);
+				const payload = new FormData();
+				payload.append("contents", modifyText);
+				fetch(				"http://127.0.0.1:8080/modREST?id=" + id + "&contents=" + modifyText
+										+ "&writer=" + writer + "&name=" + modName, {
+					method: "POST",
+					body : payload,
+				})
+				.then((response) =>{
+					document.getElementById('modifyFormInput_' + id).value = "";
+					getList();
+				});
+			}
+			
 			
 			function keyPress(event, menunum){
 				if(event.keyCode == 13){  // 엔터키 누르면
@@ -220,6 +252,38 @@
 					}
 				}
 			}
+			
+			/*// nodeJs로그인
+			function goLogin() {
+							var userid = document.getElementById("userid").value;
+							var password = document.getElementById("userpassword").value;
+							document.getElementById("userid").value = "";
+							document.getElementById("userpassword").value = "";
+							var testList = new Object() ;
+							testList.userid = userid;
+							testList.userpassword = password;
+							var jsonData = JSON.stringify(testList) ;
+							fetch("http://127.0.0.1:3000/loginREST", {
+								  method: "POST",
+								  headers: {
+									"Content-Type": "application/json"
+								  },
+								  body: jsonData,
+							})
+							.then((response) => response.json())
+							.then((data) => {
+								document.getElementById("userid").focus();	
+								if(data.result == "fail") {
+									alert("로그인 실패");	
+								} else {
+									loginok = userid;
+									member_grade = data.grade;
+									document.getElementById("loginbox").style.display = "none";
+									document.getElementById("contentsdiv").style.display = "block";
+									getList();
+								}						 
+							});
+						}*/
 							
 		</script>
 		

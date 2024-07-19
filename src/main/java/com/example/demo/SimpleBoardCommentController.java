@@ -149,15 +149,39 @@ public class SimpleBoardCommentController {
 		//String password = request.getParameter("password");
 		String writer = (String) session.getAttribute("loginok");  // 세션에 저장한 로그인한 회원 아이디
 		String id = request.getParameter("id");  // 게시글 번호
+		System.out.println("삭제하려고 받은 게시글 번호 : " + id);
 		String memberGrade = (String)session.getAttribute("membergrade");  // 세션에 저장한 등급
 		Long contentsId = Long.parseLong(id);  // 게시글 번호를 Long 타입으로 변환
 		// 게시글번호와 작성자가 모두 동일한 데이터 찾아 개수 반환
 		Long findCount = simpleBoardDataRepository.countByIdAndWriter(contentsId, writer);
 		if(findCount > 0 || memberGrade.equals("admin")) {  // 해당 게시글번호데이터가 있거나 관지자이면
+			simpleBoardDataRepository.deleteById(contentsId);
 			return "{\"result\" : \"success\"}";  // {"result" : "fail"}
 		}else {  // 데이터 있으면
 			simpleBoardDataRepository.deleteById(contentsId);  // 해당 데이터 삭제
 			return "{\"result\": \"fail\"}";  // {"result" : "success"}
 		}
 	}
+	
+	@RequestMapping(value="/modREST", method=RequestMethod.POST)
+	@ResponseBody
+	public String modREST(HttpServletRequest request, HttpSession session) {
+		String contents = request.getParameter("contents");
+		String idStr = request.getParameter("id");  // 게시글 번호
+		String modWriter = request.getParameter("writer");
+		String modName = request.getParameter("name");
+		Long id = Long.parseLong(idStr);
+		System.out.print("수정할 CONTENTS(댓글) = > " + contents + ", ID => " + id);
+		SimpleBoardData simpleBoardData = SimpleBoardData.builder()
+				.id(id)
+				.name(modName)
+				.writer(modWriter)
+				.contents(contents)
+				.build();
+		simpleBoardDataRepository.save(simpleBoardData);
+		
+		return "OK";
+
+	}
+	
 }
